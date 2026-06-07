@@ -1,0 +1,275 @@
+
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-sans)}
+  :root{--green:#1a7a4a;--green2:#2da35e;--light:#f0faf4;--card:#fff;--border:rgba(0,0,0,0.1);--text:#1a1a1a;--muted:#666;--accent:#e8f7ee}
+  @media(prefers-color-scheme:dark){:root{--green:#2da35e;--green2:#3fc474;--light:#0d1f14;--card:#142018;--border:rgba(255,255,255,0.1);--text:#e8ffe8;--muted:#8aab90;--accent:#0d2e17}}
+
+  .app-wrapper{width:100%;max-width:380px;margin:0 auto;padding:12px 8px 24px}
+  .tab-bar{display:flex;gap:6px;margin-bottom:16px;background:var(--accent);padding:4px;border-radius:12px}
+  .tab{flex:1;padding:7px 4px;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;background:transparent;color:var(--muted);transition:all .2s}
+  .tab.active{background:var(--green);color:#fff}
+
+  /* ===== SCANNER VIEW ===== */
+  .scanner-view{}
+  .camera-frame{width:100%;aspect-ratio:1/1;border-radius:20px;background:linear-gradient(135deg,#0d1f14 0%,#0a3020 100%);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;border:2px solid var(--green)}
+  .cam-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+  .scan-ring{width:180px;height:180px;border-radius:50%;border:2px dashed rgba(45,163,94,0.6);position:relative;animation:spin 8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .scan-ring::before{content:'';position:absolute;inset:12px;border-radius:50%;border:1px solid rgba(45,163,94,0.3)}
+  .scan-label{color:rgba(45,163,94,0.8);font-size:12px;letter-spacing:1px}
+  .cam-corner{position:absolute;width:28px;height:28px;border-color:var(--green2);border-style:solid}
+  .cam-corner.tl{top:16px;left:16px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+  .cam-corner.tr{top:16px;right:16px;border-width:3px 3px 0 0;border-radius:0 4px 0 0}
+  .cam-corner.bl{bottom:16px;left:16px;border-width:0 0 3px 3px;border-radius:0 0 0 4px}
+  .cam-corner.br{bottom:16px;right:16px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+  .cam-pulse{position:absolute;top:50%;width:90%;height:2px;background:linear-gradient(90deg,transparent,var(--green2),transparent);animation:pulse-scan 2.5s ease-in-out infinite;transform:translateY(-50%)}
+  @keyframes pulse-scan{0%{top:25%}50%{top:75%}100%{top:25%}}
+  .flower-emoji{font-size:52px;z-index:2;filter:drop-shadow(0 0 12px rgba(45,163,94,0.8))}
+  .cam-hint{font-size:11px;color:rgba(45,163,94,0.6);z-index:2}
+
+  .cam-controls{display:flex;align-items:center;justify-content:space-around;padding:16px 0 8px}
+  .btn-gallery{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .btn-capture{width:66px;height:66px;border-radius:50%;border:3px solid var(--green);background:var(--green2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 0 0 6px rgba(45,163,94,0.15)}
+  .btn-flip{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
+
+  /* result card */
+  .result-card{background:var(--card);border:0.5px solid var(--border);border-radius:16px;padding:14px;margin-top:12px}
+  .result-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .result-icon{width:48px;height:48px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+  .result-name{font-size:15px;font-weight:500;color:var(--text)}
+  .result-latin{font-size:11px;color:var(--muted);font-style:italic}
+  .confidence-bar{height:6px;border-radius:3px;background:rgba(0,0,0,0.08);overflow:hidden;margin-bottom:4px}
+  .confidence-fill{height:100%;border-radius:3px;background:var(--green2)}
+  .confidence-label{font-size:11px;color:var(--muted)}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .tag{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--accent);color:var(--green)}
+
+  /* ===== DATABASE VIEW ===== */
+  .db-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .db-title{font-size:15px;font-weight:500;color:var(--text);flex:1}
+  .db-count{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--accent);color:var(--green)}
+  .search-box{display:flex;align-items:center;gap:8px;background:var(--card);border:0.5px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+  .search-box input{border:none;background:transparent;flex:1;font-size:13px;color:var(--text);outline:none}
+  .search-box input::placeholder{color:var(--muted)}
+  .flower-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .flower-card{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:10px;cursor:pointer;transition:all .2s}
+  .flower-card:hover{border-color:var(--green);transform:translateY(-1px)}
+  .flower-thumb{width:100%;aspect-ratio:1/1;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:8px}
+  .flower-card-name{font-size:12px;font-weight:500;color:var(--text)}
+  .flower-card-latin{font-size:10px;color:var(--muted);font-style:italic;margin-top:2px}
+  .flower-card-samples{font-size:10px;color:var(--green);margin-top:4px}
+  .upload-btn{width:100%;padding:12px;border-radius:12px;border:1.5px dashed var(--green2);background:transparent;cursor:pointer;color:var(--green);font-size:13px;font-weight:500;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px}
+
+  /* ===== ARCH VIEW ===== */
+  .arch-block{background:var(--card);border:0.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px}
+  .arch-block-title{font-size:12px;font-weight:500;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .arch-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--border)}
+  .arch-row:last-child{border-bottom:none}
+  .arch-dot{width:8px;height:8px;border-radius:50%;background:var(--green2);flex-shrink:0}
+  .arch-row-text{font-size:12px;color:var(--text)}
+  .arch-row-sub{font-size:10px;color:var(--muted)}
+  .stack-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;background:var(--accent);color:var(--green);margin:2px}
+  .flow-arrow{text-align:center;color:var(--green2);font-size:18px;margin:2px 0}
+
+  /* bottom nav */
+  .bottom-nav{display:flex;border-top:0.5px solid var(--border);background:var(--card);border-radius:0 0 16px 16px;overflow:hidden}
+  .nav-item{flex:1;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:10px;color:var(--muted);border:none;background:transparent}
+  .nav-item.active{color:var(--green)}
+  .nav-icon{font-size:20px}
+
+  .phone-shell{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)}
+  .phone-header{background:var(--green);padding:14px 16px 10px;display:flex;align-items:center;gap:10px}
+  .phone-logo{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .phone-title{color:#fff;font-size:14px;font-weight:500}
+  .phone-sub{color:rgba(255,255,255,0.75);font-size:11px}
+  .phone-body{padding:14px;background:var(--light);min-height:360px}
+
+  .hidden{display:none}
+</style>
+
+<h2 class="sr-only">Mockup aplikasi AI Detector Bunga Indonesia dengan tampilan kamera, database bunga, dan arsitektur sistem</h2>
+
+<div class="app-wrapper">
+  <div class="phone-shell">
+    <div class="phone-header">
+      <div class="phone-logo">🌺</div>
+      <div>
+        <div class="phone-title">AI Detector Bunga</div>
+        <div class="phone-sub">Indonesia Flora Intelligence</div>
+      </div>
+    </div>
+
+    <div style="padding:10px 12px 0;background:var(--light)">
+      <div class="tab-bar">
+        <button class="tab active" onclick="showTab('scan')">📷 Scan</button>
+        <button class="tab" onclick="showTab('db')">🌿 Database</button>
+        <button class="tab" onclick="showTab('arch')">⚙️ Arsitektur</button>
+      </div>
+    </div>
+
+    <!-- SCAN TAB -->
+    <div id="tab-scan" class="phone-body">
+      <div class="camera-frame">
+        <div class="cam-corner tl"></div>
+        <div class="cam-corner tr"></div>
+        <div class="cam-corner bl"></div>
+        <div class="cam-corner br"></div>
+        <div class="cam-pulse"></div>
+        <div class="cam-overlay">
+          <div class="scan-ring"></div>
+          <div class="flower-emoji" style="position:absolute">🌺</div>
+          <div class="cam-hint" style="position:absolute;bottom:20px">Arahkan kamera ke bunga</div>
+        </div>
+      </div>
+
+      <div class="cam-controls">
+        <button class="btn-gallery" title="Pilih dari galeri" onclick="toggleResult()">🖼</button>
+        <button class="btn-capture" onclick="toggleResult()">📸</button>
+        <button class="btn-flip">🔄</button>
+      </div>
+
+      <div id="result-area" class="hidden">
+        <div class="result-card">
+          <div class="result-header">
+            <div class="result-icon">🌺</div>
+            <div>
+              <div class="result-name">Bunga Melati</div>
+              <div class="result-latin">Jasminum sambac</div>
+            </div>
+          </div>
+          <div class="confidence-bar"><div class="confidence-fill" style="width:94%"></div></div>
+          <div class="confidence-label">Akurasi: <strong style="color:var(--green)">94.2%</strong></div>
+          <div class="tags">
+            <span class="tag">🌿 Melati</span>
+            <span class="tag">📍 Jawa</span>
+            <span class="tag">🌸 Bunga Nasional</span>
+            <span class="tag">💊 Obat Tradisional</span>
+          </div>
+        </div>
+        <div class="result-card" style="margin-top:8px">
+          <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:6px">Kemungkinan lain</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">🌼</span><span style="font-size:12px;flex:1;color:var(--text)">Bunga Kenanga</span><div style="font-size:11px;color:var(--muted)">3.1%</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">🌸</span><span style="font-size:12px;flex:1;color:var(--text)">Bunga Mawar Putih</span><div style="font-size:11px;color:var(--muted)">1.7%</div></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px">🌷</span><span style="font-size:12px;flex:1;color:var(--text)">Bunga Kamboja</span><div style="font-size:11px;color:var(--muted)">1.0%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DB TAB -->
+    <div id="tab-db" class="phone-body hidden">
+      <div class="db-header">
+        <div class="db-title">Database Bunga</div>
+        <div class="db-count">47 spesies</div>
+      </div>
+      <div class="search-box">
+        <span style="font-size:14px;color:var(--muted)">🔍</span>
+        <input placeholder="Cari nama bunga...">
+      </div>
+      <div class="flower-grid">
+        <div class="flower-card" onclick="sendPrompt('Ceritakan lebih lanjut tentang Bunga Melati Jasminum sambac')">
+          <div class="flower-thumb">🌺</div>
+          <div class="flower-card-name">Bunga Melati</div>
+          <div class="flower-card-latin">Jasminum sambac</div>
+          <div class="flower-card-samples">📷 128 sampel</div>
+        </div>
+        <div class="flower-card" onclick="sendPrompt('Ceritakan lebih lanjut tentang Bunga Anggrek Phalaenopsis amabilis')">
+          <div class="flower-thumb">🌸</div>
+          <div class="flower-card-name">Anggrek Bulan</div>
+          <div class="flower-card-latin">Phalaenopsis amabilis</div>
+          <div class="flower-card-samples">📷 94 sampel</div>
+        </div>
+        <div class="flower-card" onclick="sendPrompt('Ceritakan lebih lanjut tentang Bunga Rafflesia arnoldii')">
+          <div class="flower-thumb">🌼</div>
+          <div class="flower-card-name">Rafflesia</div>
+          <div class="flower-card-latin">Rafflesia arnoldii</div>
+          <div class="flower-card-samples">📷 31 sampel</div>
+        </div>
+        <div class="flower-card" onclick="sendPrompt('Ceritakan lebih lanjut tentang Bunga Kenanga Cananga odorata')">
+          <div class="flower-thumb">🌷</div>
+          <div class="flower-card-name">Bunga Kenanga</div>
+          <div class="flower-card-latin">Cananga odorata</div>
+          <div class="flower-card-samples">📷 76 sampel</div>
+        </div>
+      </div>
+      <button class="upload-btn" onclick="sendPrompt('Bagaimana cara upload foto bunga ke database AI Detector Bunga Indonesia?')">
+        ➕ Tambah foto bunga baru ↗
+      </button>
+    </div>
+
+    <!-- ARCH TAB -->
+    <div id="tab-arch" class="phone-body hidden">
+      <div class="arch-block">
+        <div class="arch-block-title">📱 Frontend</div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">HTML + CSS (Responsive)</div><div class="arch-row-sub">Mobile-first, PWA support</div></div></div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">JavaScript Camera API</div><div class="arch-row-sub">getUserMedia() untuk live scan</div></div></div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">Canvas API</div><div class="arch-row-sub">Capture & crop frame</div></div></div>
+      </div>
+      <div class="flow-arrow">↕</div>
+      <div class="arch-block">
+        <div class="arch-block-title">🐍 Backend (Python)</div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">Flask / FastAPI</div><div class="arch-row-sub">REST API server</div></div></div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">TensorFlow / PyTorch</div><div class="arch-row-sub">Model CNN klasifikasi bunga</div></div></div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">Transfer Learning</div><div class="arch-row-sub">MobileNetV2 + fine-tuning</div></div></div>
+      </div>
+      <div class="flow-arrow">↕</div>
+      <div class="arch-block">
+        <div class="arch-block-title">🗄 Database</div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">SQLite / PostgreSQL</div><div class="arch-row-sub">Metadata bunga & user upload</div></div></div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">File Storage</div><div class="arch-row-sub">Foto training per spesies</div></div></div>
+        <div class="arch-row"><div class="arch-dot"></div><div><div class="arch-row-text">Auto-retrain pipeline</div><div class="arch-row-sub">Model dilatih ulang otomatis</div></div></div>
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Tech Stack</div>
+        <div>
+          <span class="stack-badge">Python 3.11</span>
+          <span class="stack-badge">Flask</span>
+          <span class="stack-badge">TensorFlow</span>
+          <span class="stack-badge">HTML5</span>
+          <span class="stack-badge">CSS3</span>
+          <span class="stack-badge">JavaScript</span>
+          <span class="stack-badge">SQLite</span>
+          <span class="stack-badge">PIL/Pillow</span>
+          <span class="stack-badge">NumPy</span>
+        </div>
+      </div>
+      <button class="upload-btn" style="margin-top:12px" onclick="sendPrompt('Buatkan struktur folder dan kode Python lengkap untuk AI Detector Bunga Indonesia dengan Flask dan TensorFlow')">
+        💻 Generate kode lengkap ↗
+      </button>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-item active" id="nav-scan" onclick="showTab('scan')"><div class="nav-icon">📷</div>Scan</button>
+      <button class="nav-item" id="nav-db" onclick="showTab('db')"><div class="nav-icon">🌿</div>Database</button>
+      <button class="nav-item" id="nav-hist" onclick="sendPrompt('Tampilkan riwayat scan bunga yang telah terdeteksi')"><div class="nav-icon">📋</div>Riwayat</button>
+      <button class="nav-item" id="nav-arch" onclick="showTab('arch')"><div class="nav-icon">⚙️</div>Arsitektur</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name){
+  ['scan','db','arch'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.add('hidden');
+    const nav = document.getElementById('nav-'+t);
+    if(nav) nav.classList.remove('active');
+    document.querySelectorAll('.tab').forEach((tb,i)=>{
+      const names=['scan','db','arch'];
+      if(names[i]===name) tb.classList.add('active');
+      else tb.classList.remove('active');
+    });
+  });
+  document.getElementById('tab-'+name).classList.remove('hidden');
+  const nav = document.getElementById('nav-'+name);
+  if(nav){
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    nav.classList.add('active');
+  }
+}
+
+function toggleResult(){
+  const el = document.getElementById('result-area');
+  el.classList.toggle('hidden');
+}
+</script>
